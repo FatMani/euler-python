@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
+"""Useful functions for Project Euler
+
+This module contains useful functions for completing Project Euler challenges,
+including finding prime numbers, factorisation, checking palindromicity, etc.
+
+Project Euler: https://projecteuler.net/
+"""
+
 import math
+import re
 from typing import List
 
 
@@ -30,7 +39,8 @@ def is_prime(x: int) -> bool:
         return False
     if x == 2:
         return True
-    if not x & 1:  # Excludes all even numbers
+    if not x & 1:
+        # Excludes all even numbers
         return False
 
     for i in range(3, int(math.sqrt(x)) + 1, 2):
@@ -69,49 +79,125 @@ def nth_prime(n: int) -> int:
     return first_n_primes(n)[-1]
 
 
-# Eratosthenes sieve
-# Returns all positive primes less than upperLimit
-def primes_less_than(upper_limit):
-    sieve = [True for _ in range(upper_limit + 1)]
+def primes_less_than(n: int) -> List[int]:
+    """Returns primes lower than specified number.
+
+    Args:
+        n: upper limit of primes to be found (exclusive)
+
+    Returns:
+        List of primes lower than n
+    """
+    sieve = [True for _ in range(n)]
     sieve[0:1] = [False, False]
-    for start in range(2, upper_limit + 1):
-        if sieve[start]:
-            for i in range(2 * start, upper_limit + 1, start):
-                sieve[i] = False
-    primes = []
-    for i in range(2, upper_limit + 1):
+    for i in range(2, n):
         if sieve[i]:
-            primes.append(i)
+            for j in range(2 * i, n, i):
+                sieve[j] = False
+
+    primes = []
+    for k in range(2, n):
+        if sieve[k]:
+            primes.append(k)
     return primes
 
 
-# Number of divisors
-# Finds the number of divisors for a given integer, including itself and 1
-def number_of_divisors(n):
-    divisor_count = 0
-    upper_bound = int(math.sqrt(n))
-    for i in range(1, upper_bound + 1):
+def all_prime_factors(n: int) -> List[int]:
+    """Finds prime factors of n
+
+    Args:
+        n: number to factorise
+
+    Returns:
+        List of prime factors (repetitions allowed)
+    """
+    factors = []
+    i = 2
+    while i ** 2 <= n:
+        if n % i:
+            i += 1
+        else:
+            n //= i
+            factors.append(i)
+    if n > 1:
+        factors.append(n)
+    return factors
+
+
+def unique_prime_factors(n: int) -> List[int]:
+    """Finds unique prime factors of n
+
+    Args:
+        n: number to factorise
+
+    Returns:
+        List of prime factors (no repetitions)
+    """
+    return list(set(all_prime_factors(n)))
+
+
+def divisors(n: int) -> List[int]:
+    """Finds all divisors of n
+
+    Depends on the commutative property of multiplication, i.e. 5*2 = 2*5.
+    Finds all the divisors below the square root of N and then divides
+    N by them to find the pairs.
+
+    Args:
+        n: number to find divisors of
+
+    Returns:
+        List of divisors of n
+    """
+    divisors = []
+    temp_divisors_list = []
+    for i in range(1, int(math.sqrt(n)) + 1):
         if n % i == 0:
-            divisor_count = divisor_count + 2
-    # Check for perfect squares
-    if upper_bound ** 2 == n:
-        divisor_count = divisor_count + 1
-    return divisor_count
+            divisors.append(i)
+    for j in divisors[::-1]:
+        # Exclude square, as it is already in list
+        if j ** 2 != n:
+            temp_divisors_list.append(n // j)
+    divisors.extend(temp_divisors_list)
+    return divisors
 
 
-# Sum of divisors
-# Finds the sum of an integer's whole divisors, not including itself
-def sum_of_divisors(n):
-    divisor_sum = 0
-    upper_bound = int(n / 2)
-    for i in range(1, upper_bound + 1):
-        if n % i == 0:
-            divisor_sum += i
-    return divisor_sum
+def count_of_divisors(n: int) -> int:
+    """Find the number of unique divisors of a number, including itself and 1
+
+    Args:
+        n: number to find the count of divisors of
+
+    Returns:
+        Count of divisors of n
+    """
+    return len(divisors(n))
 
 
-# nth Fibonacci number
-def fibonacci(n, _cache={}):
+def sum_of_divisors(n: int) -> int:
+    """Finds the sum of all divisors of a number, including itself and 1
+
+    Args:
+        n: number to find the sum of divisors of
+
+    Returns:
+        Sum of divisors of n
+    """
+    return sum(divisors(n))
+
+
+def fibonacci(n: int, _cache={}) -> int:
+    """Finds the n-th Fibonacci number.
+
+    Assumes the first number of the sequence is F0 = 0, F1 = 1.
+
+    Args:
+        n: index of the Fibonacci number to be found
+        _cache: internal memoization dictionary
+
+    Returns:
+        n-th Fibonacci number.
+    """
     if n in _cache:
         return _cache[n]
     elif n > 1:
@@ -120,23 +206,31 @@ def fibonacci(n, _cache={}):
         return n
 
 
-# Pandigital check
-# Checks if a number n is pandigital to the number of specified digits, excl. 0
-def is_pandigital_excl_zero(n, digits_to_check):
-    if len(str(n)) > digits_to_check or digits_to_check > 9:
-        return False
-    else:
-        count = 0
-        while n > 0 and n % 10 != 0:
-            count += 1 << ((n % 10) - 1)
-            n //= 10
-        if count == (2 ** digits_to_check - 1):
-            return True
-        else:
-            return False
+def is_pandigital(n: int, digits_to_check: int = 9) -> bool:
+    """ Checks if number contains all digits from 1 to digits_to_check exactly once
+
+    Args:
+        n: number to check
+        digits: number of digits to check, 10 means 0-inclusive
+
+    Returns:
+        True if number contains all digits from 1 to digits_to_check only once
+    """
+    bit_sum = 0
+    for i in str(n):
+        bit_sum |= 1 << int(i)
+    expected_sum = (2 ** digits_to_check - 1) if (digits_to_check == 10) else (2 ** (digits_to_check + 1) - 2)
+    return bit_sum == expected_sum
 
 
-# Counts string value where A = 1, B = 2, C = 3, etc. case independent
-# Might not work with punctuation or accented letters
-def count_string_value(string):
-    return sum(ord(c) - ord("A") + 1 for c in string.upper())
+def string_alphabetic_value(string: str) -> int:
+    """Counts the case-insensitive string alphabetic value, where A = 1, B = 2, etc.
+
+    Args:
+        string: word for which the value is to be calculated
+
+    Returns:
+        Sum of alphabetic value of each string
+    """
+    string = re.sub("[^A-Z]", "", string.upper())
+    return sum(ord(c) - ord("A") + 1 for c in string)
