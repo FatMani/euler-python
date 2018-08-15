@@ -6,7 +6,7 @@ including finding prime numbers, factorisation, checking palindromicity, etc.
 
 Project Euler: https://projecteuler.net/
 """
-
+import collections
 import math
 import re
 from typing import List
@@ -234,3 +234,23 @@ def string_alphabetic_value(string: str) -> int:
     """
     string = re.sub("[^A-Z]", "", string.upper())
     return sum(ord(c) - ord("A") + 1 for c in string)
+
+
+def is_permutation(a: int, b: int) -> bool:
+    """Checks if two numbers are permutations of each other.
+
+    Args:
+        a: first number to be checked
+        b: second number to be checked
+
+    Returns:
+        True if both numbers are permutations of each other.
+    """
+    d = collections.defaultdict(int)
+    # Convert numbers to lists
+    x, y = [int(i) for i in str(a)], [int(i) for i in str(b)]
+    for i in x:
+        d[i] += 1
+    for i in y:
+        d[i] -= 1
+    return not any(d.values())
