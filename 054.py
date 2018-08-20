@@ -26,9 +26,6 @@ def hands_from_txt() -> List[str]:
     return output
 
 
-hands_from_txt()
-
-
 @unique
 class Quality(IntEnum):
     """Quality of a poker hand. Higher values beat lower values."""
