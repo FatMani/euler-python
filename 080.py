@@ -20,7 +20,7 @@ def sqr_exp(n: int, d: int) -> int:
         2. Subtract the square of this number to find the remainder.
         3. Append "00" to this remainder (i.e. multiply by 100); this
            is the division term
-        4. Find a number x such that (2*e) concatenated with x, 
+        4. Find a number x such that (2*e) concatenated with x,
            multiplied by x (i.e. [20*e + x]*x) is as close as possible
            to the division term
         5. Append x to the expansion
@@ -48,7 +48,7 @@ def sqr_exp(n: int, d: int) -> int:
         d: number of digits in expansion
 
     Returns:
-        String containing the decimal expansion of the root. Includes
+        Integer containing the decimal expansion of the root. Includes
         the ones digit.
     """
     # Perfect squares
@@ -56,12 +56,42 @@ def sqr_exp(n: int, d: int) -> int:
         return int(n ** 0.5)
 
     # Other numbers
+    e = int(n ** 0.5)
+    div = (n - e ** 2) * 100
+    for _ in range(d):
+        for x in range(11):
+            if (20 * e + x) * x > div:
+                # This is the first number exceeding division term, so
+                # look at previous one
+                x -= 1
+                div -= (20 * e + x) * x
+                div *= 100
+                e = 10 * e + x
+                break
+    return e
+
+
+def root_sum(n: int, d: int) -> int:
+    """Calculates the sum of the terms of the square root expansion of
+    n to d decimal places.
+
+    Args:
+        n: number of which the root is to be computed
+        d: number of digits in expansion
+
+    Returns:
+        Sum of terms of decimal expansion, not including the ones term
+    """
+    expansion = sqr_exp(n, d)
+    if len(str(expansion)) == 1:
+        return 0
+    else:
+        return sum([int(x) for x in str(expansion)])
 
 
 def main():
-    pass
+    print(sum([root_sum(n, 99) for n in [x for x in range(101) if int(x ** 0.5) != x ** 0.5]]))
 
 
 if __name__ == "__main__":
     main()
-
